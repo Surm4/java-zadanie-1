@@ -1,16 +1,21 @@
 package com.surmadziecioljarosz;
 
+import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
+import static javax.swing.JOptionPane.showMessageDialog;
 import static com.surmadziecioljarosz.Ingredients.*;
 
 public class Pizzeria {
     private static ArrayList<Pizza> pizzas = new ArrayList<>();
-    private static Scanner orderReader = new Scanner(System.in);
-    private static Double orderCost = 0.0;
     private static DecimalFormat f = new DecimalFormat("##.00");
+
 
     private static void addBasicIngredients(Pizza pizza) {
         pizza.addIngredient(dough, 300);
@@ -55,70 +60,68 @@ public class Pizzeria {
         pizzas.add(tuna);
     }
 
-    public static void finishOrder() {
-        try {
-            orderReader.nextLine();
-
-            String decision = orderReader.nextLine();
-            String decisionLowerCased = decision.toLowerCase();
-            String yes = "tak";
-            String no = "nie";
-
-            if (decisionLowerCased.equals(yes)) {
-                makeOrder();
-                return;
-            }
-            if (decisionLowerCased.equals(no)) {
-                System.out.println("Dziekujemy, oto paragon: " + f.format(orderCost) + " PLN");
-                return;
-            }
-
-
-            throw new IllegalArgumentException("Decision should be equal to yes or no");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Rozumiem, że wystarczy, oto paragon: " + f.format(orderCost) + " PLN");
-        }
-    }
-
-    public static void addOrder(int pizzaNoOrdered) {
-        try {
-            Pizza orderedPizza = pizzas.stream().filter(p -> p.getMenuNo() == pizzaNoOrdered).findAny().orElse(null);
-
-            if (orderedPizza == null) {
-                throw new IllegalArgumentException("Pizza no out of bounds");
-            }
-
-            orderCost += orderedPizza.getPrice();
-        } catch (IllegalArgumentException e) {
-            System.out.println("Przykro nam, nie mamy takiej pizzy. Do widzenia!");
-            System.exit(1);
-        }
-    }
-
-    public static void makeOrder() {
-        try {
-            System.out.println("Wpisz nr pizzy jaką chcesz zamówić");
-
-            int pizzaNoOrdered = orderReader.nextInt();
-            addOrder(pizzaNoOrdered);
-            System.out.println("Pizza nr. " + pizzaNoOrdered + " została dodana do zamówienia, coś jeszcze? [Tak/Nie]");
-
-            finishOrder();
-        } catch (java.util.InputMismatchException e) {
-            System.out.println("Prosiliśmy o numer :X");
-        }
-    }
 
     public static void start() {
-        System.out.println("Witamy, w pizzerii JavaJava!");
-        System.out.println("-----------MENU---------");
+        JFrame frame = new JFrame("Okienko pizzerii JavaJava");
+        JLabel menuTitle = new JLabel("Nasze menu:");
+
+        JPanel panel = new JPanel();
+        Gui.makeColumnLayout(panel);
+
+        panel.add(menuTitle);
+        ArrayList<JTextField> orderAmountTextFields = new ArrayList<>();
 
         for (Pizza p : pizzas) {
-            System.out.printf(p.getMenuNo() + ". " + p.getName());
-            System.out.printf("\nSkładniki: " + p.getIngredientsList() + "\n");
-            System.out.printf("Cena: " + f.format(p.getPrice()) + " PLN\n");
+            Gui.makePizzaContent(panel, p, orderAmountTextFields, f);
         }
 
-        makeOrder();
+        JButton makeOrder = new JButton("Złóż zamówienie");
+        makeOrder.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int ordersAmount = orderAmountTextFields.stream().mapToInt(txtField -> Integer.parseInt(txtField.getText())).sum();
+
+                if (ordersAmount == 0) {
+                    showMessageDialog(null, "Nie złożył Pan zamówienia, przykro nam :(");
+                    return;
+                }
+
+                int[] pizzaAmountPerCategory = orderAmountTextFields.stream().mapToInt(txtField -> Integer.parseInt(txtField.getText())).toArray();
+
+                double[] pricesPerCategory = IntStream.range(0, pizzas.size()).mapToDouble(i -> {
+                    int index = (int) i;
+                    Pizza currentPizza = pizzas.get(index);
+                    double currentPizzaPrice = currentPizza.getPrice();
+                    int amount = pizzaAmountPerCategory[index];
+
+                    double price = amount * currentPizzaPrice;
+                    return price;
+                }).toArray();
+
+                double price = Arrays.stream(pricesPerCategory).sum();
+
+                String orderList = IntStream.range(0, pizzas.size()).mapToObj(i -> {
+                    Pizza currentPizza = pizzas.get(i);
+                    boolean hasPizzaOrdered = pizzaAmountPerCategory[i] != 0;
+
+                    return hasPizzaOrdered ? pizzaAmountPerCategory[i] + "x " + currentPizza.getName() + " = " + pricesPerCategory[i] + "zł" : "";
+                }).filter(str -> str != "").collect(Collectors.joining("\n"));
+
+
+                showMessageDialog(null, "Twoje zamówienie: \n" + orderList + "\nSuma: " + price);
+            }
+        });
+
+        panel.add(makeOrder);
+
+
+        panel.setBorder(new EmptyBorder(10, 10, 0, 0));
+        panel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+
+        frame.add(panel);
+
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize((int) 1E3, (int) 8E2);
+        frame.setVisible(true);
     }
 }
