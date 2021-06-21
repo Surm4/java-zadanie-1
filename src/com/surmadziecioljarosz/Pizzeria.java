@@ -108,18 +108,15 @@ public class Pizzeria {
                 }).filter(str -> str != "").collect(Collectors.joining("\n"));
 
 
-                showMessageDialog(null, "Twoje zamówienie: \n" + orderList + "\nSuma: " + price);
+                showMessageDialog(null, "Twoje zamówienie: \n" + orderList + "\nSuma: " + price + "zł");
             }
         });
 
         panel.add(makeOrder);
-
-
         panel.setBorder(new EmptyBorder(10, 10, 0, 0));
         panel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
         frame.add(panel);
-
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize((int) 1E3, (int) 8E2);
         frame.setVisible(true);

@@ -14,6 +14,10 @@ import java.util.Collections;
 import static javax.swing.JOptionPane.showMessageDialog;
 
 public class Gui {
+    private static int maxPizzasAmount = 10;
+    private static int minPizzasAmount = 0;
+    private static String defaultPizzasAmount = Integer.toString(minPizzasAmount);
+
     public static BoxLayout makeColumnLayout(JPanel target) {
         BoxLayout layout = new BoxLayout(target, BoxLayout.Y_AXIS);
         target.setLayout(layout);
@@ -52,7 +56,6 @@ public class Gui {
         Gui.makeRowLayout(actionsPanel);
 
         JLabel amountLabel = new JLabel("Ilość:");
-        String defaultPizzasAmount = "0";
 
         JTextField amount = new JTextField(defaultPizzasAmount, 2);
         orderAmountTextFields.add(amount);
@@ -63,7 +66,7 @@ public class Gui {
                 try {
                     int value = Integer.parseInt(String.valueOf(currentValue));
 
-                    if (value < 0 || value > 10) throw new IllegalArgumentException("Illegal pizzas amount");
+                    if (value < minPizzasAmount || value > maxPizzasAmount) throw new IllegalArgumentException("Illegal pizzas amount");
                 } catch (NumberFormatException err) {
                     amount.setText(defaultPizzasAmount);
                     showMessageDialog(null, "Podano ilość pizz jest nieodpowiednia");
@@ -94,7 +97,7 @@ public class Gui {
             public void actionPerformed(ActionEvent e) {
                 String currentValue = amount.getText();
                 int newValue = Integer.parseInt(currentValue) + 1;
-                if (newValue > 10) {
+                if (newValue > maxPizzasAmount) {
                     showMessageDialog(null, "Nie można zamówić > 10 pizz");
                     return;
                 }
